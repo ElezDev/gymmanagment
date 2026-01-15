@@ -15,25 +15,18 @@ import { Checkbox } from '@/components/ui/checkbox';
 import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem } from '@/types';
 
-interface User {
-    id: number;
-    name: string;
-    email: string;
-}
-
-interface Props {
-    users: User[];
-}
-
 const breadcrumbs: BreadcrumbItem[] = [
     { title: 'Dashboard', href: '/dashboard' },
     { title: 'Clientes', href: '/clients' },
     { title: 'Crear', href: '/clients/create' },
 ];
 
-export default function CreateClient({ users }: Props) {
+export default function CreateClient() {
     const { data, setData, post, processing, errors } = useForm({
-        user_id: '',
+        name: '',
+        email: '',
+        password: '',
+        password_confirmation: '',
         phone: '',
         birth_date: '',
         gender: '',
@@ -69,31 +62,76 @@ export default function CreateClient({ users }: Props) {
                     {/* Información de Usuario */}
                     <Card>
                         <CardHeader>
-                            <CardTitle>Usuario</CardTitle>
+                            <CardTitle>Datos de Usuario</CardTitle>
                         </CardHeader>
                         <CardContent className="space-y-6">
-                            <div className="space-y-2">
-                                <Label htmlFor="user_id">
-                                    Seleccionar Usuario <span className="text-red-500">*</span>
-                                </Label>
-                                <Select
-                                    value={data.user_id}
-                                    onValueChange={(value) => setData('user_id', value)}
-                                >
-                                    <SelectTrigger>
-                                        <SelectValue placeholder="Selecciona un usuario" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        {users.map((user) => (
-                                            <SelectItem key={user.id} value={user.id.toString()}>
-                                                {user.name} ({user.email})
-                                            </SelectItem>
-                                        ))}
-                                    </SelectContent>
-                                </Select>
-                                {errors.user_id && (
-                                    <p className="text-sm text-red-500">{errors.user_id}</p>
-                                )}
+                            <div className="grid gap-6 md:grid-cols-2">
+                                <div className="space-y-2">
+                                    <Label htmlFor="name">
+                                        Nombre Completo <span className="text-red-500">*</span>
+                                    </Label>
+                                    <Input
+                                        id="name"
+                                        value={data.name}
+                                        onChange={(e) => setData('name', e.target.value)}
+                                        placeholder="Juan Pérez"
+                                        required
+                                    />
+                                    {errors.name && (
+                                        <p className="text-sm text-red-500">{errors.name}</p>
+                                    )}
+                                </div>
+
+                                <div className="space-y-2">
+                                    <Label htmlFor="email">
+                                        Email <span className="text-red-500">*</span>
+                                    </Label>
+                                    <Input
+                                        id="email"
+                                        type="email"
+                                        value={data.email}
+                                        onChange={(e) => setData('email', e.target.value)}
+                                        placeholder="juan@example.com"
+                                        required
+                                    />
+                                    {errors.email && (
+                                        <p className="text-sm text-red-500">{errors.email}</p>
+                                    )}
+                                </div>
+
+                                <div className="space-y-2">
+                                    <Label htmlFor="password">
+                                        Contraseña <span className="text-red-500">*</span>
+                                    </Label>
+                                    <Input
+                                        id="password"
+                                        type="password"
+                                        value={data.password}
+                                        onChange={(e) => setData('password', e.target.value)}
+                                        placeholder="Mínimo 8 caracteres"
+                                        required
+                                    />
+                                    {errors.password && (
+                                        <p className="text-sm text-red-500">{errors.password}</p>
+                                    )}
+                                </div>
+
+                                <div className="space-y-2">
+                                    <Label htmlFor="password_confirmation">
+                                        Confirmar Contraseña <span className="text-red-500">*</span>
+                                    </Label>
+                                    <Input
+                                        id="password_confirmation"
+                                        type="password"
+                                        value={data.password_confirmation}
+                                        onChange={(e) => setData('password_confirmation', e.target.value)}
+                                        placeholder="Repite la contraseña"
+                                        required
+                                    />
+                                    {errors.password_confirmation && (
+                                        <p className="text-sm text-red-500">{errors.password_confirmation}</p>
+                                    )}
+                                </div>
                             </div>
                         </CardContent>
                     </Card>

@@ -22,20 +22,15 @@ class ClientController extends Controller
 
     public function create()
     {
-        $users = User::whereDoesntHave('client')
-            ->where('email_verified_at', '!=', null)
-            ->orderBy('name')
-            ->get(['id', 'name', 'email']);
-
-        return Inertia::render('clients/create', [
-            'users' => $users,
-        ]);
+        return Inertia::render('clients/create');
     }
 
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'user_id' => 'required|exists:users,id',
+            'name' => 'required|string|max:255',
+            'email' => 'required|string|email|max:255|unique:users',
+            'password' => 'required|string|min:8|confirmed',
             'phone' => 'nullable|string',
             'birth_date' => 'nullable|date',
             'gender' => 'nullable|in:male,female,other',
@@ -48,8 +43,17 @@ class ClientController extends Controller
             'is_active' => 'boolean',
         ]);
 
+        // Crear el usuario primero
+        $user = User::create([
+            'name' => $validated['name'],
+            'email' => $validated['email'],
+            'password' => bcrypt($validated['password']),
+            'email_verified_at' => now(), // Verificar email automáticamente
+        ]);
+
+        // Crear el cliente asociado al usuario
         $client = Client::create([
-            'user_id' => $validated['user_id'],
+            'user_id' => $user->id,
             'phone' => $validated['phone'] ?? null,
             'birth_date' => $validated['birth_date'] ?? null,
             'gender' => $validated['gender'] ?? null,
@@ -63,7 +67,7 @@ class ClientController extends Controller
         ]);
 
         return redirect()->route('clients.show', $client->id)
-            ->with('success', 'Cliente creado exitosamente');
+            ->with('success', 'Cliente y usuario creados exitosamente');
     }
 
     public function show(Client $client)
