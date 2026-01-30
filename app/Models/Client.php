@@ -14,6 +14,7 @@ class Client extends Model
 
     protected $fillable = [
         'user_id',
+        'membership_number',
         'photo',
         'phone',
         'birth_date',
@@ -22,8 +23,13 @@ class Client extends Model
         'weight',
         'medical_notes',
         'goals',
+        'emergency_contact_name',
+        'emergency_contact_phone',
         'membership_start',
         'membership_end',
+        'membership_status',
+        'suspension_reason',
+        'suspended_at',
         'is_active',
     ];
 
@@ -31,6 +37,7 @@ class Client extends Model
         'birth_date' => 'date',
         'membership_start' => 'date',
         'membership_end' => 'date',
+        'suspended_at' => 'datetime',
         'height' => 'decimal:2',
         'weight' => 'decimal:2',
         'is_active' => 'boolean',
@@ -73,11 +80,76 @@ class Client extends Model
         return $this->hasMany(ClientSupplement::class);
     }
 
+    public function memberships(): HasMany
+    {
+        return $this->hasMany(Membership::class);
+    }
+
+    public function activeMembership()
+    {
+        return $this->hasOne(Membership::class)
+            ->where('status', 'active')
+            ->where('end_date', '>=', now())
+            ->latest('start_date');
+    }
+
+    public function payments(): HasMany
+    {
+        return $this->hasMany(Payment::class);
+    }
+
+    public function checkIns(): HasMany
+    {
+        return $this->hasMany(CheckIn::class);
+    }
+
+    public function bodyMeasurements(): HasMany
+    {
+        return $this->hasMany(BodyMeasurement::class);
+    }
+
+    public function classBookings(): HasMany
+    {
+        return $this->hasMany(ClassBooking::class);
+    }
+
+    public function nutritionPlans(): HasMany
+    {
+        return $this->hasMany(NutritionPlan::class);
+    }
+
+    public function activeNutritionPlan()
+    {
+        return $this->hasOne(NutritionPlan::class)
+            ->where('is_active', true)
+            ->latest('start_date');
+    }
+
     public function getPhotoUrlAttribute()
     {
         if ($this->photo) {
             return asset('storage/' . $this->photo);
         }
         return null;
+    }
+
+    // Generar número de membresía único
+    public static function generateMembershipNumber(): string
+    {
+        $year = now()->year;
+        $lastClient = self::whereYear('created_at', $year)
+            ->whereNotNull('membership_number')
+            ->orderBy('id', 'desc')
+            ->first();
+
+        $nextNumber = $lastClient ? intval(substr($lastClient->membership_number, -5)) + 1 : 1;
+        
+        return sprintf('MEM-%d-%05d', $year, $nextNumber);
+    }
+
+    // Verificar si tiene membresía activa
+    public function hasActiveMembership(): bool
+    {
+        return $this->activeMembership()->exists();
     }
 }

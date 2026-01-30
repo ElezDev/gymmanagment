@@ -8,6 +8,14 @@ use App\Http\Controllers\RoleController;
 use App\Http\Controllers\PermissionController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\WorkoutSessionController;
+use App\Http\Controllers\MembershipPlanController;
+use App\Http\Controllers\MembershipController;
+use App\Http\Controllers\PaymentController;
+use App\Http\Controllers\CheckInController;
+use App\Http\Controllers\BodyMeasurementController;
+use App\Http\Controllers\ClassScheduleController;
+use App\Http\Controllers\ClassBookingController;
+use App\Http\Controllers\NutritionPlanController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 use Laravel\Fortify\Features;
@@ -81,6 +89,81 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::delete('routines/{routine}/clients/{client}', [RoutineController::class, 'unassignFromClient'])
             ->name('routines.unassign')
             ->middleware('can:assign routines');
+    });
+
+    // Membership Plans (Admin/Trainer)
+    Route::middleware('can:view clients')->group(function () {
+        Route::resource('membership-plans', MembershipPlanController::class);
+        Route::get('membership-plans/active/list', [MembershipPlanController::class, 'active'])->name('membership-plans.active');
+    });
+
+    // Memberships (Admin/Trainer)
+    Route::middleware('can:view clients')->group(function () {
+        Route::get('memberships/expiring', [MembershipController::class, 'expiring'])->name('memberships.expiring');
+        Route::resource('memberships', MembershipController::class)->except(['edit', 'update', 'destroy']);
+        Route::get('memberships/{membership}/renew', [MembershipController::class, 'renewForm'])->name('memberships.renew.form');
+        Route::post('memberships/{membership}/renew', [MembershipController::class, 'renew'])->name('memberships.renew');
+        Route::post('memberships/{membership}/cancel', [MembershipController::class, 'cancel'])->name('memberships.cancel');
+        Route::post('memberships/{membership}/suspend', [MembershipController::class, 'suspend'])->name('memberships.suspend');
+        Route::post('memberships/{membership}/reactivate', [MembershipController::class, 'reactivate'])->name('memberships.reactivate');
+    });
+
+    // Payments (Admin/Trainer/Receptionist)
+    Route::middleware('can:view clients')->group(function () {
+        Route::resource('payments', PaymentController::class)->only(['index', 'create', 'store', 'show']);
+        Route::post('payments/{payment}/refund', [PaymentController::class, 'refund'])->name('payments.refund');
+        Route::get('payments/{payment}/receipt', [PaymentController::class, 'receipt'])->name('payments.receipt');
+        Route::get('payments-report', [PaymentController::class, 'report'])->name('payments.report');
+    });
+
+    // Check-ins (Admin/Trainer/Receptionist)
+    Route::middleware('can:view clients')->group(function () {
+        Route::get('check-ins', [CheckInController::class, 'index'])->name('check-ins.index');
+        Route::post('check-ins', [CheckInController::class, 'checkIn'])->name('check-ins.check-in');
+        Route::post('check-ins/{checkIn}/check-out', [CheckInController::class, 'checkOut'])->name('check-ins.check-out');
+        Route::get('check-ins/search', [CheckInController::class, 'search'])->name('check-ins.search');
+        Route::get('check-ins/dashboard', [CheckInController::class, 'dashboard'])->name('check-ins.dashboard');
+        Route::get('clients/{client}/check-in-history', [CheckInController::class, 'clientHistory'])->name('clients.check-in-history');
+    });
+
+    // Body Measurements (Admin/Trainer)
+    Route::middleware('can:view clients')->group(function () {
+        Route::get('clients/{client}/body-measurements', [BodyMeasurementController::class, 'index'])->name('body-measurements.index');
+        Route::get('clients/{client}/body-measurements/create', [BodyMeasurementController::class, 'create'])->name('body-measurements.create');
+        Route::post('clients/{client}/body-measurements', [BodyMeasurementController::class, 'store'])->name('body-measurements.store');
+        Route::get('clients/{client}/body-measurements/{bodyMeasurement}', [BodyMeasurementController::class, 'show'])->name('body-measurements.show');
+        Route::get('clients/{client}/body-measurements/{bodyMeasurement}/edit', [BodyMeasurementController::class, 'edit'])->name('body-measurements.edit');
+        Route::put('clients/{client}/body-measurements/{bodyMeasurement}', [BodyMeasurementController::class, 'update'])->name('body-measurements.update');
+        Route::delete('clients/{client}/body-measurements/{bodyMeasurement}', [BodyMeasurementController::class, 'destroy'])->name('body-measurements.destroy');
+        Route::get('clients/{client}/body-measurements-charts', [BodyMeasurementController::class, 'charts'])->name('body-measurements.charts');
+    });
+
+    // Class Schedules (Admin/Trainer)
+    Route::middleware('can:view clients')->group(function () {
+        Route::resource('class-schedules', ClassScheduleController::class);
+        Route::get('class-schedules-calendar', [ClassScheduleController::class, 'calendar'])->name('class-schedules.calendar');
+    });
+
+    // Class Bookings (Admin/Trainer/Receptionist)
+    Route::middleware('can:view clients')->group(function () {
+        Route::get('class-bookings', [ClassBookingController::class, 'index'])->name('class-bookings.index');
+        Route::post('class-bookings', [ClassBookingController::class, 'book'])->name('class-bookings.book');
+        Route::post('class-bookings/{classBooking}/cancel', [ClassBookingController::class, 'cancel'])->name('class-bookings.cancel');
+        Route::post('class-bookings/{classBooking}/attended', [ClassBookingController::class, 'markAttended'])->name('class-bookings.attended');
+        Route::post('class-bookings/{classBooking}/no-show', [ClassBookingController::class, 'markNoShow'])->name('class-bookings.no-show');
+        Route::get('class-bookings/available', [ClassBookingController::class, 'available'])->name('class-bookings.available');
+        Route::get('class-bookings/attendance-report', [ClassBookingController::class, 'attendanceReport'])->name('class-bookings.attendance-report');
+    });
+
+    // Nutrition Plans (Admin/Trainer)
+    Route::middleware('can:view clients')->group(function () {
+        Route::resource('nutrition-plans', NutritionPlanController::class);
+    });
+
+    // Client routes for classes and nutrition
+    Route::middleware('can:view own client data')->group(function () {
+        Route::get('my-class-bookings', [ClassBookingController::class, 'myBookings'])->name('my-class-bookings');
+        Route::get('my-nutrition-plan', [NutritionPlanController::class, 'myPlan'])->name('my-nutrition-plan');
     });
 
     // Roles and Permissions management (Admin only)

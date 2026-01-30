@@ -1,5 +1,5 @@
 import { Link, usePage } from '@inertiajs/react';
-import { BookOpen, Dumbbell, Folder, LayoutGrid, Users, ClipboardList, Activity, ShieldCheck, Key, UserCog } from 'lucide-react';
+import { BookOpen, Dumbbell, Folder, LayoutGrid, Users, ClipboardList, Activity, ShieldCheck, Key, UserCog, CreditCard, Receipt, DoorOpen, Calendar, Apple, Ruler } from 'lucide-react';
 
 import { NavFooter } from '@/components/nav-footer';
 import { NavMain } from '@/components/nav-main';
@@ -51,6 +51,55 @@ export function AppSidebar() {
         });
     }
 
+    // Membership management
+    if (permissions.includes('view memberships')) {
+        mainNavItems.push({
+            title: 'Membresías',
+            icon: CreditCard,
+            items: [
+                {
+                    title: 'Planes',
+                    href: '/membership-plans',
+                },
+                {
+                    title: 'Activas',
+                    href: '/memberships',
+                },
+                {
+                    title: 'Por Vencer',
+                    href: '/memberships/expiring',
+                },
+            ],
+        });
+    }
+
+    // Payments
+    if (permissions.includes('view payments')) {
+        mainNavItems.push({
+            title: 'Pagos',
+            href: '/payments',
+            icon: Receipt,
+        });
+    }
+
+    // Check-ins
+    if (permissions.includes('view check-ins')) {
+        mainNavItems.push({
+            title: 'Acceso',
+            icon: DoorOpen,
+            items: [
+                {
+                    title: 'Check-ins Hoy',
+                    href: '/check-ins/dashboard',
+                },
+                {
+                    title: 'Historial',
+                    href: '/check-ins',
+                },
+            ],
+        });
+    }
+
     if (permissions.includes('view exercises')) {
         mainNavItems.push({
             title: 'Ejercicios',
@@ -64,6 +113,42 @@ export function AppSidebar() {
             title: 'Rutinas',
             href: '/routines',
             icon: ClipboardList,
+        });
+    }
+
+    // Body measurements
+    if (permissions.includes('view body-measurements')) {
+        mainNavItems.push({
+            title: 'Mediciones',
+            href: '/body-measurements',
+            icon: Ruler,
+        });
+    }
+
+    // Class schedules
+    if (permissions.includes('view class-schedules')) {
+        mainNavItems.push({
+            title: 'Clases',
+            icon: Calendar,
+            items: [
+                {
+                    title: 'Horarios',
+                    href: '/class-schedules',
+                },
+                {
+                    title: 'Reservas',
+                    href: '/class-bookings',
+                },
+            ],
+        });
+    }
+
+    // Nutrition plans
+    if (permissions.includes('view nutrition-plans')) {
+        mainNavItems.push({
+            title: 'Nutrición',
+            href: '/nutrition-plans',
+            icon: Apple,
         });
     }
 
