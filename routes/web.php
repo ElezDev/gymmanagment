@@ -175,6 +175,34 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     // Clients can view their own routines
     Route::middleware('can:view own routines')->group(function () {
+        // My Membership
+        Route::get('my-membership', function () {
+            $client = auth()->user()->client;
+            if (!$client) {
+                return Inertia::render('my-membership', [
+                    'membership' => null,
+                    'daysRemaining' => null,
+                ]);
+            }
+            
+            $membership = $client->memberships()
+                ->where('status', 'active')
+                ->with('membershipPlan')
+                ->first();
+            
+            $daysRemaining = null;
+            if ($membership) {
+                $endDate = \Carbon\Carbon::parse($membership->end_date);
+                $daysRemaining = now()->diffInDays($endDate, false);
+                $daysRemaining = $daysRemaining < 0 ? 0 : $daysRemaining;
+            }
+            
+            return Inertia::render('my-membership', [
+                'membership' => $membership,
+                'daysRemaining' => $daysRemaining,
+            ]);
+        })->name('my-membership');
+        
         Route::get('my-routines', function () {
             $client = auth()->user()->client;
             if (!$client) {

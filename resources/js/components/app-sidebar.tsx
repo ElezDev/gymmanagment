@@ -176,6 +176,12 @@ export function AppSidebar() {
     // Client menu items
     if (permissions.includes('view own routines')) {
         mainNavItems.push({
+            title: 'Mi Membresía',
+            href: '/my-membership',
+            icon: CreditCard,
+        });
+        
+        mainNavItems.push({
             title: 'Mis Rutinas',
             href: '/my-routines',
             icon: ClipboardList,
