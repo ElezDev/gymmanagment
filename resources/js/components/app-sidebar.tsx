@@ -1,5 +1,5 @@
 import { Link, usePage } from '@inertiajs/react';
-import { BookOpen, Dumbbell, Folder, LayoutGrid, Users, ClipboardList, Activity } from 'lucide-react';
+import { BookOpen, Dumbbell, Folder, LayoutGrid, Users, ClipboardList, Activity, ShieldCheck, Key } from 'lucide-react';
 
 import { NavFooter } from '@/components/nav-footer';
 import { NavMain } from '@/components/nav-main';
@@ -64,6 +64,21 @@ export function AppSidebar() {
             title: 'Rutinas',
             href: '/routines',
             icon: ClipboardList,
+        });
+    }
+
+    // Admin menu items - Roles and Permissions
+    if (auth?.user?.roles?.includes('admin')) {
+        mainNavItems.push({
+            title: 'Roles',
+            href: '/roles',
+            icon: ShieldCheck,
+        });
+        
+        mainNavItems.push({
+            title: 'Permisos',
+            href: '/permissions',
+            icon: Key,
         });
     }
 

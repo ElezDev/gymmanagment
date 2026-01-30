@@ -4,6 +4,8 @@ use App\Http\Controllers\ClientController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\ExerciseController;
 use App\Http\Controllers\RoutineController;
+use App\Http\Controllers\RoleController;
+use App\Http\Controllers\PermissionController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 use Laravel\Fortify\Features;
@@ -50,6 +52,12 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::delete('routines/{routine}/clients/{client}', [RoutineController::class, 'unassignFromClient'])
             ->name('routines.unassign')
             ->middleware('can:assign routines');
+    });
+
+    // Roles and Permissions management (Admin only)
+    Route::middleware('role:admin')->group(function () {
+        Route::resource('roles', RoleController::class);
+        Route::resource('permissions', PermissionController::class);
     });
 
     // Clients can view their own routines
