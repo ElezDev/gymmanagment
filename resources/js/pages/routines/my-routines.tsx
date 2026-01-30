@@ -4,17 +4,15 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem } from '@/types';
+import { useState } from 'react';
 import {
     Dumbbell,
     Clock,
     Target,
-    TrendingUp,
     Play,
     CheckCircle2,
-    Calendar,
-    Repeat,
-    Weight,
-    ChevronRight,
+    ChevronDown,
+    ChevronUp,
 } from 'lucide-react';
 
 interface Exercise {
@@ -71,32 +69,15 @@ const difficultyLabels = {
     advanced: 'Avanzado',
 };
 
-const categoryIcons: Record<string, any> = {
-    strength: Weight,
-    cardio: TrendingUp,
-    flexibility: Target,
-    functional: Dumbbell,
-};
-
 export default function MyRoutines({ routines }: Props) {
-    const getCategoryIcon = (category: string) => {
-        return categoryIcons[category.toLowerCase()] || Dumbbell;
-    };
+    const [expandedRoutine, setExpandedRoutine] = useState<number | null>(null);
 
-    const groupExercisesByCategory = (exercises: RoutineExercise[]) => {
-        const grouped: Record<string, RoutineExercise[]> = {};
-        exercises.forEach((exercise) => {
-            const category = exercise.exercise.category || 'other';
-            if (!grouped[category]) {
-                grouped[category] = [];
-            }
-            grouped[category].push(exercise);
-        });
-        return grouped;
+    const toggleRoutine = (routineId: number) => {
+        setExpandedRoutine(expandedRoutine === routineId ? null : routineId);
     };
 
     const handleStartWorkout = (routineId: number) => {
-        router.post('/workout-sessions/start', {
+        router.post('/my-workout-sessions/start', {
             routine_id: routineId,
         });
     };
@@ -181,17 +162,15 @@ export default function MyRoutines({ routines }: Props) {
 
                 {/* Routines List */}
                 {routines.length > 0 ? (
-                    <div className="grid gap-6">
+                    <div className="grid gap-4">
                         {routines.map((routine) => {
-                            const groupedExercises = groupExercisesByCategory(
-                                routine.routine_exercises,
-                            );
+                            const isExpanded = expandedRoutine === routine.id;
 
                             return (
                                 <Card key={routine.id} className="overflow-hidden">
-                                    <CardHeader className="bg-gradient-to-r from-primary/10 to-transparent border-b">
+                                    <CardHeader className="bg-gradient-to-r from-primary/10 to-transparent">
                                         <div className="flex items-start justify-between">
-                                            <div className="space-y-2">
+                                            <div className="flex-1 space-y-2">
                                                 <div className="flex items-center gap-3">
                                                     <CardTitle className="text-2xl">
                                                         {routine.name}
@@ -210,214 +189,99 @@ export default function MyRoutines({ routines }: Props) {
                                                             ]
                                                         }
                                                     </Badge>
-                                                    {routine.is_active && (
-                                                        <Badge variant="default">Activa</Badge>
-                                                    )}
                                                 </div>
                                                 <CardDescription className="text-base">
                                                     {routine.description}
                                                 </CardDescription>
-                                            </div>
-                                            <Button
-                                                className="gap-2"
-                                                onClick={() => handleStartWorkout(routine.id)}
-                                            >
-                                                <Play className="h-4 w-4" />
-                                                Comenzar Entrenamiento
-                                            </Button>
-                                        </div>
-
-                                        {/* Routine Info */}
-                                        <div className="flex items-center gap-6 mt-4 text-sm text-muted-foreground">
-                                            <div className="flex items-center gap-2">
-                                                <Dumbbell className="h-4 w-4" />
-                                                <span>
-                                                    {routine.routine_exercises.length} ejercicios
-                                                </span>
-                                            </div>
-                                            {routine.estimated_duration && (
-                                                <div className="flex items-center gap-2">
-                                                    <Clock className="h-4 w-4" />
-                                                    <span>{routine.estimated_duration} minutos</span>
+                                                
+                                                {/* Routine Info */}
+                                                <div className="flex items-center gap-6 text-sm text-muted-foreground pt-2">
+                                                    <div className="flex items-center gap-2">
+                                                        <Dumbbell className="h-4 w-4" />
+                                                        <span>{routine.routine_exercises.length} ejercicios</span>
+                                                    </div>
+                                                    {routine.estimated_duration && (
+                                                        <div className="flex items-center gap-2">
+                                                            <Clock className="h-4 w-4" />
+                                                            <span>{routine.estimated_duration} min</span>
+                                                        </div>
+                                                    )}
                                                 </div>
-                                            )}
-                                            {routine.pivot?.assigned_date && (
-                                                <div className="flex items-center gap-2">
-                                                    <Calendar className="h-4 w-4" />
-                                                    <span>
-                                                        Asignada:{' '}
-                                                        {new Date(
-                                                            routine.pivot.assigned_date,
-                                                        ).toLocaleDateString('es', {
-                                                            day: 'numeric',
-                                                            month: 'long',
-                                                        })}
-                                                    </span>
-                                                </div>
-                                            )}
+                                            </div>
+                                            
+                                            <div className="flex gap-2 ml-4">
+                                                <Button
+                                                    variant="outline"
+                                                    size="sm"
+                                                    onClick={() => toggleRoutine(routine.id)}
+                                                >
+                                                    {isExpanded ? (
+                                                        <>
+                                                            <ChevronUp className="h-4 w-4 mr-1" />
+                                                            Ocultar
+                                                        </>
+                                                    ) : (
+                                                        <>
+                                                            <ChevronDown className="h-4 w-4 mr-1" />
+                                                            Ver Ejercicios
+                                                        </>
+                                                    )}
+                                                </Button>
+                                                <Button
+                                                    onClick={() => handleStartWorkout(routine.id)}
+                                                    size="sm"
+                                                >
+                                                    <Play className="h-4 w-4 mr-1" />
+                                                    Comenzar
+                                                </Button>
+                                            </div>
                                         </div>
                                     </CardHeader>
 
-                                    <CardContent className="p-6">
-                                        {/* Exercises grouped by category */}
-                                        <div className="space-y-6">
-                                            {Object.entries(groupedExercises).map(
-                                                ([category, exercises]) => {
-                                                    const Icon = getCategoryIcon(category);
-                                                    return (
-                                                        <div key={category}>
-                                                            <div className="flex items-center gap-2 mb-4">
-                                                                <Icon className="h-5 w-5 text-primary" />
-                                                                <h3 className="text-lg font-semibold capitalize">
-                                                                    {category === 'strength'
-                                                                        ? 'Fuerza'
-                                                                        : category === 'cardio'
-                                                                        ? 'Cardio'
-                                                                        : category ===
-                                                                          'flexibility'
-                                                                        ? 'Flexibilidad'
-                                                                        : category ===
-                                                                          'functional'
-                                                                        ? 'Funcional'
-                                                                        : category}
-                                                                </h3>
-                                                                <Badge variant="secondary">
-                                                                    {exercises.length}
-                                                                </Badge>
+                                    {isExpanded && (
+                                        <CardContent className="p-6">
+                                            <div className="space-y-3">
+                                                {routine.routine_exercises
+                                                    .sort((a, b) => a.order - b.order)
+                                                    .map((routineExercise, index) => (
+                                                        <div
+                                                            key={routineExercise.id}
+                                                            className="flex items-center gap-4 p-4 bg-muted/50 rounded-lg"
+                                                        >
+                                                            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10 text-primary font-semibold">
+                                                                {index + 1}
                                                             </div>
-
-                                                            <div className="grid gap-3">
-                                                                {exercises
-                                                                    .sort((a, b) => a.order - b.order)
-                                                                    .map((routineExercise) => (
-                                                                        <div
-                                                                            key={routineExercise.id}
-                                                                            className="flex items-center gap-4 p-4 rounded-lg border hover:bg-accent/50 transition-colors group"
-                                                                        >
-                                                                            <div className="flex items-center justify-center w-8 h-8 rounded-full bg-primary/10 text-primary font-semibold text-sm">
-                                                                                {routineExercise.order}
-                                                                            </div>
-
-                                                                            <div className="flex-1">
-                                                                                <h4 className="font-medium">
-                                                                                    {
-                                                                                        routineExercise
-                                                                                            .exercise
-                                                                                            .name
-                                                                                    }
-                                                                                </h4>
-                                                                                {routineExercise
-                                                                                    .exercise
-                                                                                    .description && (
-                                                                                    <p className="text-sm text-muted-foreground mt-1">
-                                                                                        {
-                                                                                            routineExercise
-                                                                                                .exercise
-                                                                                                .description
-                                                                                        }
-                                                                                    </p>
-                                                                                )}
-                                                                                {routineExercise.notes && (
-                                                                                    <p className="text-sm text-primary/70 mt-1 italic">
-                                                                                        💡{' '}
-                                                                                        {
-                                                                                            routineExercise.notes
-                                                                                        }
-                                                                                    </p>
-                                                                                )}
-                                                                            </div>
-
-                                                                            <div className="flex items-center gap-6 text-sm">
-                                                                                <div className="text-center">
-                                                                                    <div className="flex items-center gap-1 text-muted-foreground mb-1">
-                                                                                        <Repeat className="h-3 w-3" />
-                                                                                        <span className="text-xs">
-                                                                                            Series
-                                                                                        </span>
-                                                                                    </div>
-                                                                                    <div className="font-semibold">
-                                                                                        {
-                                                                                            routineExercise.sets
-                                                                                        }
-                                                                                    </div>
-                                                                                </div>
-
-                                                                                <div className="text-center">
-                                                                                    <div className="flex items-center gap-1 text-muted-foreground mb-1">
-                                                                                        <Target className="h-3 w-3" />
-                                                                                        <span className="text-xs">
-                                                                                            Reps
-                                                                                        </span>
-                                                                                    </div>
-                                                                                    <div className="font-semibold">
-                                                                                        {
-                                                                                            routineExercise.reps
-                                                                                        }
-                                                                                    </div>
-                                                                                </div>
-
-                                                                                <div className="text-center">
-                                                                                    <div className="flex items-center gap-1 text-muted-foreground mb-1">
-                                                                                        <Clock className="h-3 w-3" />
-                                                                                        <span className="text-xs">
-                                                                                            Descanso
-                                                                                        </span>
-                                                                                    </div>
-                                                                                    <div className="font-semibold">
-                                                                                        {
-                                                                                            routineExercise.rest_seconds
-                                                                                        }
-                                                                                        s
-                                                                                    </div>
-                                                                                </div>
-                                                                            </div>
-
-                                                                            {routineExercise.exercise
-                                                                                .video_url && (
-                                                                                <Button
-                                                                                    variant="ghost"
-                                                                                    size="sm"
-                                                                                    asChild
-                                                                                >
-                                                                                    <a
-                                                                                        href={
-                                                                                            routineExercise
-                                                                                                .exercise
-                                                                                                .video_url
-                                                                                        }
-                                                                                        target="_blank"
-                                                                                        rel="noopener noreferrer"
-                                                                                    >
-                                                                                        Ver video
-                                                                                        <ChevronRight className="ml-1 h-4 w-4" />
-                                                                                    </a>
-                                                                                </Button>
-                                                                            )}
-                                                                        </div>
-                                                                    ))}
+                                                            <div className="flex-1">
+                                                                <h4 className="font-semibold">
+                                                                    {routineExercise.exercise.name}
+                                                                </h4>
+                                                                <p className="text-sm text-muted-foreground">
+                                                                    {routineExercise.exercise.category}
+                                                                </p>
+                                                            </div>
+                                                            <div className="flex items-center gap-4 text-sm">
+                                                                <div className="text-center">
+                                                                    <p className="font-semibold">{routineExercise.sets}</p>
+                                                                    <p className="text-xs text-muted-foreground">series</p>
+                                                                </div>
+                                                                <div className="text-center">
+                                                                    <p className="font-semibold">{routineExercise.reps}</p>
+                                                                    <p className="text-xs text-muted-foreground">reps</p>
+                                                                </div>
+                                                                {routineExercise.rest_seconds > 0 && (
+                                                                    <div className="text-center">
+                                                                        <p className="font-semibold">
+                                                                            {routineExercise.rest_seconds}s
+                                                                        </p>
+                                                                        <p className="text-xs text-muted-foreground">descanso</p>
+                                                                    </div>
+                                                                )}
                                                             </div>
                                                         </div>
-                                                    );
-                                                },
-                                            )}
-                                        </div>
-
-                                        {/* Action Buttons */}
-                                        <div className="flex gap-3 mt-6 pt-6 border-t">
-                                            <Button
-                                                className="flex-1 gap-2"
-                                                onClick={() => handleStartWorkout(routine.id)}
-                                            >
-                                                <Play className="h-4 w-4" />
-                                                Comenzar Entrenamiento
-                                            </Button>
-                                            <Button variant="outline" asChild>
-                                                <Link href={`/routines/${routine.id}`}>
-                                                    Ver Detalles
-                                                </Link>
-                                            </Button>
-                                        </div>
-                                    </CardContent>
+                                                    ))}
+                                            </div>
+                                        </CardContent>
+                                    )}
                                 </Card>
                             );
                         })}

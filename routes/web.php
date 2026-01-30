@@ -6,6 +6,8 @@ use App\Http\Controllers\ExerciseController;
 use App\Http\Controllers\RoutineController;
 use App\Http\Controllers\RoleController;
 use App\Http\Controllers\PermissionController;
+use App\Http\Controllers\UserController;
+use App\Http\Controllers\WorkoutSessionController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 use Laravel\Fortify\Features;
@@ -19,10 +21,21 @@ Route::get('/', function () {
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('dashboard', [DashboardController::class, 'index'])
         ->name('dashboard');
+    
+    // Shared workout exercise update (both trainers and clients can update exercises)
+    Route::put('workout-sessions/exercises/{exerciseLog}', [WorkoutSessionController::class, 'updateExercise'])->name('workout-sessions.update-exercise');
+    Route::put('my-workout-sessions/exercises/{exerciseLog}', [WorkoutSessionController::class, 'updateExercise'])->name('my-workout-sessions.update-exercise');
 
     // Clients routes
     Route::middleware('can:view clients')->group(function () {
         Route::resource('clients', ClientController::class);
+        
+        // Workout Sessions Management
+        Route::post('workout-sessions/start', [WorkoutSessionController::class, 'start'])->name('workout-sessions.start');
+        Route::get('workout-sessions/{workoutSession}/active', [WorkoutSessionController::class, 'active'])->name('workout-sessions.active');
+        Route::post('workout-sessions/{workoutSession}/complete', [WorkoutSessionController::class, 'complete'])->name('workout-sessions.complete');
+        Route::get('clients/{client}/workout-history', [WorkoutSessionController::class, 'history'])->name('clients.workout-history');
+        Route::get('workout-sessions/{workoutSession}', [WorkoutSessionController::class, 'show'])->name('workout-sessions.show');
     });
 
     // Clients can view their own data
@@ -32,7 +45,23 @@ Route::middleware(['auth', 'verified'])->group(function () {
             if (!$client) {
                 return redirect()->route('dashboard');
             }
-            return redirect()->route('clients.show', $client);
+            
+            $client->load([
+                'user',
+                'routines' => function ($query) {
+                    $query->orderBy('start_date', 'desc');
+                },
+                'progressLogs' => function ($query) {
+                    $query->orderBy('log_date', 'desc')->take(10);
+                },
+                'workoutSessions' => function ($query) {
+                    $query->with('routine')->orderBy('started_at', 'desc')->take(10);
+                },
+            ]);
+
+            return Inertia::render('clients/show', [
+                'client' => $client,
+            ]);
         })->name('my-profile');
     });
 
@@ -58,6 +87,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::middleware('role:admin')->group(function () {
         Route::resource('roles', RoleController::class);
         Route::resource('permissions', PermissionController::class);
+        Route::resource('users', UserController::class);
     });
 
     // Clients can view their own routines
@@ -74,6 +104,13 @@ Route::middleware(['auth', 'verified'])->group(function () {
                 ->get();
             return Inertia::render('routines/my-routines', ['routines' => $routines]);
         })->name('my-routines');
+        
+        // Workout Sessions for Clients
+        Route::post('my-workout-sessions/start', [WorkoutSessionController::class, 'startOwn'])->name('my-workout-sessions.start');
+        Route::get('my-workout-sessions/{workoutSession}/active', [WorkoutSessionController::class, 'activeOwn'])->name('my-workout-sessions.active');
+        Route::post('my-workout-sessions/{workoutSession}/complete', [WorkoutSessionController::class, 'completeOwn'])->name('my-workout-sessions.complete');
+        Route::get('my-workout-history', [WorkoutSessionController::class, 'historyOwn'])->name('my-workout-history');
+        Route::get('my-workout-sessions/{workoutSession}', [WorkoutSessionController::class, 'showOwn'])->name('my-workout-sessions.show');
 
         Route::get('my-progress', function () {
             $client = auth()->user()->client;

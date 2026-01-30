@@ -57,6 +57,13 @@ class ExerciseController extends Controller
             ->with('success', 'Ejercicio creado exitosamente');
     }
 
+    public function show(Exercise $exercise)
+    {
+        return Inertia::render('exercises/show', [
+            'exercise' => $exercise,
+        ]);
+    }
+
     public function edit(Exercise $exercise)
     {
         return Inertia::render('exercises/edit', [

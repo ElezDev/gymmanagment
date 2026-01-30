@@ -15,6 +15,7 @@ import {
 import { useState } from 'react';
 import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem } from '@/types';
+import { Play, History, Dumbbell } from 'lucide-react';
 
 interface User {
     name: string;
@@ -63,6 +64,14 @@ interface Client {
 
 interface Props {
     client: Client;
+    auth: {
+        user: {
+            id: number;
+            client?: {
+                id: number;
+            };
+        };
+    };
 }
 
 const breadcrumbs: BreadcrumbItem[] = [
@@ -71,8 +80,11 @@ const breadcrumbs: BreadcrumbItem[] = [
     { title: 'Perfil', href: '#' },
 ];
 
-export default function ShowClient({ client }: Props) {
+export default function ShowClient({ client, auth }: Props) {
     const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+    
+    // Verificar si el usuario actual es el cliente que está viendo su propio perfil
+    const isOwnProfile = auth?.user?.client?.id === client.id;
 
     const handleDelete = () => {
         setShowDeleteDialog(true);
@@ -274,8 +286,18 @@ export default function ShowClient({ client }: Props) {
                     {/* Rutinas */}
                     <Card>
                         <CardHeader>
-                            <CardTitle>Rutinas Asignadas</CardTitle>
-                            <CardDescription>{client.routines.length} rutina(s)</CardDescription>
+                            <div className="flex items-center justify-between">
+                                <div>
+                                    <CardTitle>Rutinas Asignadas</CardTitle>
+                                    <CardDescription>{client.routines.length} rutina(s)</CardDescription>
+                                </div>
+                                <Button asChild variant="outline" size="sm">
+                                    <Link href={isOwnProfile ? '/my-workout-history' : `/clients/${client.id}/workout-history`}>
+                                        <History className="h-4 w-4 mr-2" />
+                                        Historial
+                                    </Link>
+                                </Button>
+                            </div>
                         </CardHeader>
                         <CardContent>
                             {client.routines.length === 0 ? (
@@ -287,14 +309,31 @@ export default function ShowClient({ client }: Props) {
                                     {client.routines.map((routine) => (
                                         <div
                                             key={routine.id}
-                                            className="rounded-lg border p-3"
+                                            className="rounded-lg border p-3 flex items-center justify-between"
                                         >
-                                            <h3 className="font-medium">{routine.name}</h3>
-                                            {routine.description && (
-                                                <p className="text-sm text-muted-foreground">
-                                                    {routine.description}
-                                                </p>
-                                            )}
+                                            <div>
+                                                <h3 className="font-medium">{routine.name}</h3>
+                                                {routine.description && (
+                                                    <p className="text-sm text-muted-foreground">
+                                                        {routine.description}
+                                                    </p>
+                                                )}
+                                            </div>
+                                            <Button 
+                                                size="sm"
+                                                onClick={() => {
+                                                    const route = isOwnProfile 
+                                                        ? '/my-workout-sessions/start'
+                                                        : '/workout-sessions/start';
+                                                    const data = isOwnProfile
+                                                        ? { routine_id: routine.id }
+                                                        : { client_id: client.id, routine_id: routine.id };
+                                                    router.post(route, data);
+                                                }}
+                                            >
+                                                <Play className="h-4 w-4 mr-1" />
+                                                Iniciar
+                                            </Button>
                                         </div>
                                     ))}
                                 </div>

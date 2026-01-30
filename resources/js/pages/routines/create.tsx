@@ -43,14 +43,14 @@ export default function CreateRoutine({ exercises }: Props) {
             setSelectedExercises(selectedExercises.filter((id) => id !== exerciseId));
             setData(
                 'exercises',
-                data.exercises.filter((ex) => ex.exercise_id !== exerciseId),
+                data.exercises.filter((ex) => ex.id !== exerciseId),
             );
         } else {
             setSelectedExercises([...selectedExercises, exerciseId]);
             setData('exercises', [
                 ...data.exercises,
                 {
-                    exercise_id: exerciseId,
+                    id: exerciseId,
                     sets: 3,
                     reps: 10,
                     weight: 0,
@@ -67,7 +67,7 @@ export default function CreateRoutine({ exercises }: Props) {
         setData(
             'exercises',
             data.exercises.map((ex) =>
-                ex.exercise_id === exerciseId ? { ...ex, [field]: value } : ex,
+                ex.id === exerciseId ? { ...ex, [field]: value } : ex,
             ),
         );
     };
